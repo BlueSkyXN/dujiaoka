@@ -14,6 +14,11 @@ use Illuminate\Database\Eloquent\Model;
 class BaseModel extends Model
 {
 
+    /**
+     * 防止批量赋值攻击
+     */
+    protected $guarded = ['id'];
+
     const STATUS_OPEN = 1; // 状态开启
     const STATUS_CLOSE = 0; // 状态关闭
 

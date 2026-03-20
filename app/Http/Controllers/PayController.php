@@ -94,9 +94,10 @@ class PayController extends BaseController
         if (!$this->payGateway) {
             throw new RuleValidationException(__('dujiaoka.prompt.pay_gateway_does_not_exist'));
         }
-        // 临时保存支付方式
-        $this->order->pay_id = $this->payGateway->id;
-        $this->order->save();
+        // 安全校验：阻止支付网关切换（防止伪造支付），使用严格比较
+        if ((int)$this->order->pay_id !== (int)$this->payGateway->id) {
+            throw new RuleValidationException(__('dujiaoka.prompt.pay_gateway_does_not_match'));
+        }
     }
 
     /**
@@ -114,13 +115,30 @@ class PayController extends BaseController
     {
         try {
             $this->checkOrder($orderSN);
+            // 白名单校验支付路由，防止开放重定向攻击
+            $decodedHandle = urldecode($handle);
+            $allowedPrefixes = [
+                'pay/alipay', 'pay/wepay', 'pay/mapay', 'pay/paysapi',
+                'pay/payjs', 'pay/yipay', 'pay/paypal', 'pay/vpay',
+                'pay/stripe', 'pay/coinbase', 'pay/epusdt', 'pay/tokenpay'
+            ];
+            $isAllowed = false;
+            foreach ($allowedPrefixes as $prefix) {
+                if (strpos($decodedHandle, $prefix) === 0) {
+                    $isAllowed = true;
+                    break;
+                }
+            }
+            if (!$isAllowed) {
+                throw new RuleValidationException(__('dujiaoka.prompt.pay_gateway_does_not_exist'));
+            }
             $bccomp = bccomp($this->order->actual_price, 0.00, 2);
             // 如果订单金额为0 代表无需支付，直接成功
             if ($bccomp == 0) {
                 $this->orderProcessService->completedOrder($this->order->order_sn, 0.00);
                 return redirect(url('detail-order-sn', ['orderSN' => $this->order->order_sn]));
             }
-            return redirect(url(urldecode($handle), ['payway' => $payway, 'orderSN' => $orderSN]));
+            return redirect(url($decodedHandle, ['payway' => $payway, 'orderSN' => $orderSN]));
         } catch (RuleValidationException $exception) {
             return $this->err($exception->getMessage());
         }

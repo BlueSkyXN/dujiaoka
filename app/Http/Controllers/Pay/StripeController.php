@@ -439,6 +439,9 @@ class StripeController extends PayController
             return redirect(url('detail-order-sn', ['orderSN' => $data['orderid']]));
         }
         $payGateway = $this->payService->detail($cacheord->pay_id);
+        if (!$payGateway || ltrim($payGateway->pay_handleroute, '/') !== 'pay/stripe') {
+            return redirect(url('detail-order-sn', ['orderSN' => $data['orderid']]));
+        }
         \Stripe\Stripe::setApiKey($payGateway -> merchant_pem);
         $source_object = \Stripe\Source::retrieve($data['source']);
         //die($source_object);
@@ -465,6 +468,9 @@ class StripeController extends PayController
             return 'fail';
         } else {
             $payGateway = $this->payService->detail($cacheord->pay_id);
+            if (!$payGateway || ltrim($payGateway->pay_handleroute, '/') !== 'pay/stripe') {
+                return 'fail';
+            }
             \Stripe\Stripe::setApiKey($payGateway -> merchant_pem);
             $source_object = \Stripe\Source::retrieve($data['source']);
             if ($source_object->status == 'chargeable') {
@@ -494,6 +500,9 @@ class StripeController extends PayController
         } else {
             try {
                 $payGateway = $this->payService->detail($cacheord->pay_id);
+                if (!$payGateway || ltrim($payGateway->pay_handleroute, '/') !== 'pay/stripe') {
+                    return 'fail';
+                }
                 \Stripe\Stripe::setApiKey($payGateway -> merchant_pem);
                 $result = \Stripe\Charge::create([
                     'amount' => bcmul($this->getUsdCurrency($cacheord->actual_price), 100,0),

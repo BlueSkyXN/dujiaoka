@@ -81,7 +81,7 @@ class CoinbaseController extends PayController
     public function notifyUrl(Request $request)
     {
         $payload = file_get_contents( 'php://input' );
-        $sig    = $_SERVER['HTTP_X_CC_WEBHOOK_SIGNATURE'];
+        $sig    = $request->header('X-Cc-Webhook-Signature', '');
 		$data       = json_decode( $payload, true );
 		$event_data = $data['event']['data'];
 		$order = $this->orderService->detailOrderSN($event_data['metadata']['customer_id']);//
@@ -92,13 +92,13 @@ class CoinbaseController extends PayController
 		if (!$payGateway) {
 			return 'fail';
 		}
-        if($payGateway->pay_handleroute != 'pay/coinbase'){
+        if(ltrim($payGateway->pay_handleroute, '/') !== 'pay/coinbase'){
             return 'fail';
         }
 		$secret = $payGateway->merchant_pem;//共享密钥
 		$sig2 = hash_hmac( 'sha256', $payload, $secret );
         $result_str=array("confirmed","resolved");//返回的结果字符串数组
-		if (!empty( $payload ) && ($sig === $sig2))
+		if (!empty( $payload ) && hash_equals($sig2, $sig))
 		{
 
 			foreach ($event_data['payments'] as $payment) {

@@ -89,11 +89,11 @@ class PaysapiController extends PayController
         if (!$payGateway) {
             return 'error';
         }
-        if($payGateway->pay_handleroute != '/pay/paysapi'){
+        if(ltrim($payGateway->pay_handleroute, '/') !== 'pay/paysapi'){
             return 'error';
         }
         $temps = md5($data['orderid'] . $data['orderuid'] . $data['paysapi_id'] . $data['price'] . $data['realprice'] . $payGateway->merchant_pem);
-        if ($temps != $data['key']){
+        if (!hash_equals($temps, $data['key'])){
             return 'fail';
         }else{
             //校验key成功，是自己人。执行自己的业务逻辑：加余额，订单付款成功，装备购买成功等等。

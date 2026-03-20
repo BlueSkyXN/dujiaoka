@@ -66,7 +66,7 @@ class WepayController extends PayController
         if (!$payGateway) {
             return 'error';
         }
-        if($payGateway->pay_handleroute != '/pay/wepay'){
+        if(ltrim($payGateway->pay_handleroute, '/') !== 'pay/wepay'){
             return 'error';
         }
         $config = [

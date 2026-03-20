@@ -123,7 +123,10 @@ return [
         'search_order_browser_tips' => '最多只能查詢最近 5 筆訂單',
         'no_related_order_found_for_cache' => '未找到相關訂單快取！',
         'no_related_order_found' => '未找到相關訂單！',
-        'new_order_push' => '新訂單通知'
+        'new_order_push' => '新訂單通知',
+        'loop_carmis_limit' => '此商品最多購買一件！',
+        'pay_gateway_does_not_match' => '支付方式不匹配，請重新下單',
+        'order_status_not_payable' => '訂單狀態異常，無法完成支付',
     ],
 
     'equipment' => [

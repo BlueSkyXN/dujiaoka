@@ -85,7 +85,7 @@ class AlipayController extends PayController
         if (!$payGateway) {
             return 'error';
         }
-        if($payGateway->pay_handleroute != '/pay/alipay'){
+        if(ltrim($payGateway->pay_handleroute, '/') !== 'pay/alipay'){
             return 'fail';
         }
         $config = [

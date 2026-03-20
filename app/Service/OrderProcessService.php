@@ -386,14 +386,22 @@ class OrderProcessService
     {
         DB::beginTransaction();
         try {
-            // 得到订单详情
-            $order = $this->orderService->detailOrderSN($orderSN);
+            // 使用悲观锁防止并发重复处理
+            $order = Order::query()
+                ->with(['coupon', 'pay', 'goods'])
+                ->where('order_sn', $orderSN)
+                ->lockForUpdate()
+                ->first();
             if (!$order) {
                 throw new \Exception(__('dujiaoka.prompt.order_does_not_exist'));
             }
             // 订单已经处理
             if ($order->status == Order::STATUS_COMPLETED) {
                 throw new \Exception(__('dujiaoka.prompt.order_status_completed'));
+            }
+            // 安全校验：仅允许待支付状态的订单完成支付
+            if ($order->status != Order::STATUS_WAIT_PAY) {
+                throw new \Exception(__('dujiaoka.prompt.order_status_not_payable'));
             }
             $bccomp = bccomp($order->actual_price, $actualPrice, 2);
             // 金额不一致

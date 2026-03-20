@@ -67,7 +67,7 @@ class YipayController extends PayController
         if (!$payGateway) {
             return 'fail';
         }
-        if($payGateway->pay_handleroute != '/pay/yipay'){
+        if(ltrim($payGateway->pay_handleroute, '/') !== 'pay/yipay'){
             return 'fail';
         }
         ksort($data); //重新排序$data数组
@@ -82,7 +82,7 @@ class YipayController extends PayController
                 $sign .= "$key=$val"; //拼接为url参数形式
             }
         }
-        if (!$data['trade_no'] || md5($sign . $payGateway->merchant_pem) != $data['sign']) { //不合法的数据
+        if (!$data['trade_no'] || !hash_equals(md5($sign . $payGateway->merchant_pem), $data['sign'])) { //不合法的数据
             return 'fail';  //返回失败 继续补单
         } else {
             //合法的数据

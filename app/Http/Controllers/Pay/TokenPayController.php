@@ -79,12 +79,12 @@ class TokenPayController extends PayController
         if (!$payGateway) {
             return 'fail';
         }
-        if($payGateway->pay_handleroute != 'pay/tokenpay'){
+        if (ltrim($payGateway->pay_handleroute, '/') !== 'pay/tokenpay') {
             return 'fail';
         }
         //合法的数据
 		$signature = $this->VerifySign($data, $payGateway->merchant_key);
-        if ($data['Signature'] != $signature) { //不合法的数据
+        if (!hash_equals($signature, $data['Signature'])) { //不合法的数据
             return 'fail';  //返回失败 继续补单
         } else {
             //合法的数据

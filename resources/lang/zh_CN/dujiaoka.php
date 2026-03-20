@@ -124,7 +124,9 @@ return [
         'no_related_order_found_for_cache' => '未找到相关订单缓存！',
         'no_related_order_found' => '未找到相关订单！',
         'new_order_push' => '新订单通知',
-        'loop_carmis_limit' => '此商品最多购买一件！'
+        'loop_carmis_limit' => '此商品最多购买一件！',
+        'pay_gateway_does_not_match' => '支付方式不匹配，请重新下单',
+        'order_status_not_payable' => '订单状态异常，无法完成支付',
     ],
 
     'equipment' => [

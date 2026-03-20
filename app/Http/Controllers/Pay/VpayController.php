@@ -57,11 +57,10 @@ class VpayController extends PayController
             return 'fail';
         }
         $payGateway = $this->payService->detail($order->pay_id);
-
-        if($payGateway->pay_handleroute != 'pay/vpay'){
+        if (!$payGateway) {
             return 'fail';
         }
-        if (!$payGateway) {
+        if (ltrim($payGateway->pay_handleroute, '/') !== 'pay/vpay') {
             return 'fail';
         }
 
@@ -74,7 +73,7 @@ class VpayController extends PayController
         $sign = $data['sign'];//校验签名，计算方式 = md5(payId + param + type + price + reallyPrice + 通讯密钥)
         //开始校验签名
         $_sign = md5($payId . $param . $type . $price . $reallyPrice . $key);
-        if ($_sign != $sign) { //不合法的数据
+        if (!hash_equals($_sign, $sign)) { //不合法的数据
             return 'fail';  //返回失败 继续补单
         } else { //合法的数据
             //业务处理

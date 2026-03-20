@@ -62,11 +62,11 @@ class MapayController extends PayController
         if (!$payGateway) {
             return 'fail';
         }
-        if($payGateway->pay_handleroute != '/pay/mapay'){
+        if(ltrim($payGateway->pay_handleroute, '/') !== 'pay/mapay'){
             return 'fail';
         }
         $query = signquery_string($data);
-        if (!$data['pay_no'] || md5($query . $payGateway->merchant_pem ) != $data['sign']) { //不合法的数据
+        if (!$data['pay_no'] || !hash_equals(md5($query . $payGateway->merchant_pem), $data['sign'])) { //不合法的数据
             return 'fail';  //返回失败 继续补单
         } else { //合法的数据
             //业务处理
