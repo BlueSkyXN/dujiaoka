@@ -69,9 +69,16 @@ class ApiHook implements ShouldQueue
             return;
         }
         $host = $parsedUrl['host'] ?? '';
-        // 阻止访问内网地址
-        if (preg_match('/^(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|0\.|localhost|::1|\[::1\])/i', $host)) {
-            \Illuminate\Support\Facades\Log::warning('ApiHook blocked: internal IP', ['url' => $goodInfo->api_hook]);
+        // 阻止访问内网地址：解析DNS后使用filter_var验证
+        // 覆盖RFC1918、保留地址、云元数据(169.254.x)、IPv6等所有内网变体
+        $resolvedIP = gethostbyname($host);
+        if ($resolvedIP === $host && !filter_var($host, FILTER_VALIDATE_IP)) {
+            // DNS解析失败且不是有效IP，阻止访问
+            \Illuminate\Support\Facades\Log::warning('ApiHook blocked: unresolvable host', ['url' => $goodInfo->api_hook]);
+            return;
+        }
+        if (!filter_var($resolvedIP, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            \Illuminate\Support\Facades\Log::warning('ApiHook blocked: internal/reserved IP', ['url' => $goodInfo->api_hook, 'resolved' => $resolvedIP]);
             return;
         }
         $postdata = [
