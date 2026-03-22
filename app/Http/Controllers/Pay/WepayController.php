@@ -56,7 +56,19 @@ class WepayController extends PayController
     public function notifyUrl()
     {
         $xml = file_get_contents('php://input');
-        $arr = json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
+        // 禁用外部实体加载，防止XXE攻击
+        $previousValue = null;
+        if (PHP_MAJOR_VERSION < 8) {
+            $previousValue = libxml_disable_entity_loader(true);
+        }
+        $parsed = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_NONET);
+        if (PHP_MAJOR_VERSION < 8 && $previousValue !== null) {
+            libxml_disable_entity_loader($previousValue);
+        }
+        if ($parsed === false) {
+            return 'error';
+        }
+        $arr = json_decode(json_encode($parsed), true);
         $oid = $arr['out_trade_no'];
         $order = $this->orderService->detailOrderSN($oid);
         if (!$order) {

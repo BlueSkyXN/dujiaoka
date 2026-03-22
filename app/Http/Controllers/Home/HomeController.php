@@ -166,11 +166,23 @@ class HomeController extends BaseController
             $installSql = database_path() . DIRECTORY_SEPARATOR . 'sql' . DIRECTORY_SEPARATOR . 'install.sql';
             $envTemp = file_get_contents($envExamplePath);
             $postData = $request->all();
+            // 安全白名单：仅允许预期的安装配置项写入.env
+            $allowedKeys = [
+                'title', 'app_url', 'app_key',
+                'db_host', 'db_port', 'db_database', 'db_username', 'db_password',
+                'redis_host', 'redis_password', 'redis_port',
+                'admin_path', 'dujiaoka_admin_language',
+            ];
             // 临时写入key
             $postData['app_key'] = 'base64:' . base64_encode(
                     Encrypter::generateKey(config('app.cipher'))
                 );
             foreach ($postData as $key => $item) {
+                if (!in_array($key, $allowedKeys)) {
+                    continue;
+                }
+                // 过滤换行符防止.env注入
+                $item = str_replace(["\r", "\n"], '', $item);
                 $envTemp = str_replace('{' . $key . '}', $item, $envTemp);
             }
             // 写入配置

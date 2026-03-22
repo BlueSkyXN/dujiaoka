@@ -24,7 +24,7 @@ class VpayController extends PayController
 
             //构造要请求的参数数组，无需改动
             $parameter = array(
-                "payId" => date('YmdHis') . rand(1, 65535),//平台ID号
+                "payId" => date('YmdHis') . random_int(100000, 999999),//平台ID号
                 "price" => (float)$this->order->actual_price,//原价
                 'param' => $this->order->order_sn,
                 'returnUrl' => route('vpay-return', ['order_id' => $this->order->order_sn]),

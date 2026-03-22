@@ -31,7 +31,7 @@ class CouponService
         $coupon = Coupon::query()->whereHas('goods', function ($query) use ($goodsID) {
             $query->where('goods_id', $goodsID);
         })->where('is_open', Coupon::STATUS_OPEN)
-          ->where('is_use', '!=', Coupon::STATUS_USE)
+          ->where('ret', '>', 0)
           ->where('coupon', $coupon)->first();
         return $coupon;
     }
@@ -43,9 +43,11 @@ class CouponService
      */
     public function used(string $coupon): bool
     {
+        // 仅在最后一次使用时（ret<=1）标记为已使用，支持多次使用优惠券
         return Coupon::query()
-            ->where('coupon',  $coupon)
-            ->update(['is_use' => Coupon::STATUS_USE]);
+            ->where('coupon', $coupon)
+            ->where('ret', '<=', 1)
+            ->update(['is_use' => Coupon::STATUS_USE]) > 0;
     }
 
     /**
@@ -59,8 +61,10 @@ class CouponService
      */
     public function retDecr(string $coupon)
     {
+        // 原子操作：仅在剩余次数大于0时递减，防止并发导致负数
         return Coupon::query()
-            ->where('coupon',  $coupon)
+            ->where('coupon', $coupon)
+            ->where('ret', '>', 0)
             ->decrement('ret', 1);
     }
 
