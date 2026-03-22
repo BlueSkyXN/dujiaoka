@@ -30,7 +30,9 @@ class CouponService
     {
         $coupon = Coupon::query()->whereHas('goods', function ($query) use ($goodsID) {
             $query->where('goods_id', $goodsID);
-        })->where('is_open', Coupon::STATUS_OPEN)->where('coupon', $coupon)->first();
+        })->where('is_open', Coupon::STATUS_OPEN)
+          ->where('is_use', '!=', Coupon::STATUS_USE)
+          ->where('coupon', $coupon)->first();
         return $coupon;
     }
 

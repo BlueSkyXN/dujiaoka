@@ -62,6 +62,18 @@ class ApiHook implements ShouldQueue
         if(empty($goodInfo->api_hook)){
             return;
         }
+        // 安全校验：仅允许 http/https 协议，阻止 SSRF 攻击内网
+        $parsedUrl = parse_url($goodInfo->api_hook);
+        if (!$parsedUrl || !isset($parsedUrl['scheme']) || !in_array(strtolower($parsedUrl['scheme']), ['http', 'https'])) {
+            \Illuminate\Support\Facades\Log::warning('ApiHook blocked: invalid URL scheme', ['url' => $goodInfo->api_hook]);
+            return;
+        }
+        $host = $parsedUrl['host'] ?? '';
+        // 阻止访问内网地址
+        if (preg_match('/^(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|0\.|localhost|::1|\[::1\])/i', $host)) {
+            \Illuminate\Support\Facades\Log::warning('ApiHook blocked: internal IP', ['url' => $goodInfo->api_hook]);
+            return;
+        }
         $postdata = [
             'title' => $this->order->title,
             'order_sn' => $this->order->order_sn,

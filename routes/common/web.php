@@ -16,8 +16,8 @@ Route::group(['middleware' => ['dujiaoka.boot'],'namespace' => 'Home'], function
     Route::get('check-geetest', 'HomeController@geetest');
     // 商品详情
     Route::get('buy/{id}', 'HomeController@buy');
-    // 提交订单
-    Route::post('create-order', 'OrderController@createOrder');
+    // 提交订单（频率限制：每分钟30次）
+    Route::post('create-order', 'OrderController@createOrder')->middleware('throttle:30,1');
     // 结算页
     Route::get('bill/{orderSN}', 'OrderController@bill');
     // 通过订单号详情页
@@ -26,15 +26,15 @@ Route::group(['middleware' => ['dujiaoka.boot'],'namespace' => 'Home'], function
     Route::get('order-search', 'OrderController@orderSearch');
     // 检查订单状态
     Route::get('check-order-status/{orderSN}', 'OrderController@checkOrderStatus');
-    // 通过订单号查询
-    Route::post('search-order-by-sn', 'OrderController@searchOrderBySN');
-    // 通过邮箱查询
-    Route::post('search-order-by-email', 'OrderController@searchOrderByEmail');
-    // 通过浏览器查询
-    Route::post('search-order-by-browser', 'OrderController@searchOrderByBrowser');
+    // 通过订单号查询（频率限制：每分钟10次）
+    Route::post('search-order-by-sn', 'OrderController@searchOrderBySN')->middleware('throttle:10,1');
+    // 通过邮箱查询（频率限制：每分钟10次）
+    Route::post('search-order-by-email', 'OrderController@searchOrderByEmail')->middleware('throttle:10,1');
+    // 通过浏览器查询（频率限制：每分钟10次）
+    Route::post('search-order-by-browser', 'OrderController@searchOrderByBrowser')->middleware('throttle:10,1');
 });
 
-Route::group(['middleware' => ['install.check'],'namespace' => 'Home'], function () {
+Route::group(['middleware' => ['install.check', 'throttle:5,1'],'namespace' => 'Home'], function () {
     // 安装
     Route::get('install', 'HomeController@install');
     // 执行安装

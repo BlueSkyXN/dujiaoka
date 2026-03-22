@@ -95,7 +95,7 @@ class HomeController extends BaseController
     public function geetest(Request $request)
     {
         $data = [
-            'user_id' => @Auth::user()?@Auth::user()->id:'UnLoginUser',
+            'user_id' => Auth::check() ? Auth::user()->id : 'UnLoginUser',
             'client_type' => 'web',
             'ip_address' => \Illuminate\Support\Facades\Request::ip()
         ];
@@ -131,6 +131,11 @@ class HomeController extends BaseController
      */
     public function doInstall(Request $request)
     {
+        // 双重校验：防止安装锁被绕过
+        $installLock = base_path() . DIRECTORY_SEPARATOR . 'install.lock';
+        if (file_exists($installLock)) {
+            return 'System already installed.';
+        }
         try {
             $dbConfig = config('database');
             $mysqlDB = [
@@ -158,7 +163,6 @@ class HomeController extends BaseController
             // 获得文件模板
             $envExamplePath = base_path() . DIRECTORY_SEPARATOR . '.env.example';
             $envPath =  base_path() . DIRECTORY_SEPARATOR . '.env';
-            $installLock = base_path() . DIRECTORY_SEPARATOR . 'install.lock';
             $installSql = database_path() . DIRECTORY_SEPARATOR . 'sql' . DIRECTORY_SEPARATOR . 'install.sql';
             $envTemp = file_get_contents($envExamplePath);
             $postData = $request->all();
@@ -177,11 +181,14 @@ class HomeController extends BaseController
             file_put_contents($installLock, 'install ok');
             return 'success';
         } catch (\RedisException $exception) {
-            return 'Redis配置错误 :' . $exception->getMessage();
+            \Log::error('Install Redis error: ' . $exception->getMessage());
+            return 'Redis configuration error';
         } catch (QueryException $exception) {
-            return '数据库配置错误 :' . $exception->getMessage();
+            \Log::error('Install DB error: ' . $exception->getMessage());
+            return 'Database configuration error';
         } catch (\Exception $exception) {
-            return $exception->getMessage();
+            \Log::error('Install error: ' . $exception->getMessage());
+            return 'Installation error';
         }
     }
 
