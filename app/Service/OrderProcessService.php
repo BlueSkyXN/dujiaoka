@@ -399,8 +399,9 @@ class OrderProcessService
             if ($order->status == Order::STATUS_COMPLETED) {
                 throw new \Exception(__('dujiaoka.prompt.order_status_completed'));
             }
-            // 安全校验：仅允许待支付状态的订单完成支付
-            if ($order->status != Order::STATUS_WAIT_PAY) {
+            // 安全校验：仅允许待支付和已过期的订单完成支付
+            // 允许STATUS_EXPIRED：支付网关回调可能在订单过期后几秒才到达
+            if (!in_array($order->status, [Order::STATUS_WAIT_PAY, Order::STATUS_EXPIRED])) {
                 throw new \Exception(__('dujiaoka.prompt.order_status_not_payable'));
             }
             $bccomp = bccomp($order->actual_price, $actualPrice, 2);

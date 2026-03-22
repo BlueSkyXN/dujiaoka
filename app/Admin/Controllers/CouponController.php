@@ -106,7 +106,7 @@ class CouponController extends AdminController
                 });
             $form->currency('discount')->default(0)->required();
             $form->text('coupon')->required();
-            $form->number('ret')->default(1);
+            $form->number('ret')->default(1)->min(1)->help('剩余使用次数，至少为1');
             $form->radio('is_use')->options(CouponModel::getStatusUseMap())->default(CouponModel::STATUS_UNUSED);
             $form->switch('is_open')->default(CouponModel::STATUS_OPEN);
             $form->display('created_at');
