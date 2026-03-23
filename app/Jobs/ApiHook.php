@@ -81,6 +81,13 @@ class ApiHook implements ShouldQueue
             \Illuminate\Support\Facades\Log::warning('ApiHook blocked: internal/reserved IP', ['url' => $goodInfo->api_hook, 'resolved' => $resolvedIP]);
             return;
         }
+        // 防止DNS重绑定：将URL中的host替换为已验证的IP，用Host头传递原始域名
+        $scheme = strtolower($parsedUrl['scheme']);
+        $port = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '';
+        $path = $parsedUrl['path'] ?? '/';
+        $query = isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '';
+        $safeUrl = "{$scheme}://{$resolvedIP}{$port}{$path}{$query}";
+
         $postdata = [
             'title' => $this->order->title,
             'order_sn' => $this->order->order_sn,
@@ -89,18 +96,23 @@ class ApiHook implements ShouldQueue
             'order_info' => $this->order->info,
             'good_id' => $goodInfo->id,
             'gd_name' => $goodInfo->gd_name
-
         ];
 
-        
+        $headers = "Content-type: application/json\r\nHost: {$host}{$port}";
         $opts = [
             'http' => [
                 'method'  => 'POST',
-                'header'  => 'Content-type: application/json',
-                'content' => json_encode($postdata,JSON_UNESCAPED_UNICODE)
-            ]
+                'header'  => $headers,
+                'content' => json_encode($postdata, JSON_UNESCAPED_UNICODE),
+                'timeout' => 10,
+            ],
+            'ssl' => [
+                'peer_name' => $host,
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+            ],
         ];
-        $context  = stream_context_create($opts);
-        file_get_contents($goodInfo->api_hook, false, $context);
+        $context = stream_context_create($opts);
+        @file_get_contents($safeUrl, false, $context);
     }
 }
